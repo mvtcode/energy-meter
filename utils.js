@@ -6,7 +6,7 @@ const HexToBytes = hex => {
 	return arr;
 };
 
-const string2Hex = s => {
+module.exports.string2Hex = s => {
 	let hex = '';
 	for(let i = 0; i < s.length; i++) {
 		hex += s.charCodeAt(i).toString(16);
@@ -14,7 +14,7 @@ const string2Hex = s => {
 	return hex;
 };
 
-const toHex = arr => {
+module.exports.toHex = arr => {
 	let hex = '';
 	for(let i = 0; i < arr.length; i++) {
 		hex += arr[i].toString(16);
@@ -35,4 +35,12 @@ module.exports.elsterEncrypt = (password, seed) => {
 	}
 
 	return string2Hex(toHex(crypted)).toUpperCase();
+}
+
+module.exports.bcc=(s)=>{
+	let result =  s.charCodeAt(0)
+	for(let i = 1; i < s.length; i++) {
+		result =  result ^s.charCodeAt(i)
+	}
+	return String.fromCharCode(result)
 }
