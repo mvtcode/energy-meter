@@ -13,12 +13,17 @@ const STX = String.fromCharCode(2);
 const ETX = String.fromCharCode(3);
 const ACK = String.fromCharCode(6);
 const SUB = String.fromCharCode(26);
-let seed = '';
+
 let step = 0;
 let result = ""
+
 const dataSend = {
   time: "",
-  meterId: ""
+  meterId: "",
+  v: 0,
+  a: 0,
+  kWh: 0,
+  w: 0
 }
 serialport.open((err) => {
   console.log(`Port open: ${err ? err : "ok"}`);
@@ -93,40 +98,87 @@ serialport.on('data', (data) => {
         dataSend.time = utils.getTimeFormMess(result)
         step++;
         result = ""
-        axios.post('http://localhost:9000/meter', {
-          ...dataSend
-        })
-          .then(function (response) {
-            // handle success
-            console.log("Send Success",per);
-          })
-          .catch(function (error) {
-            // handle error
-            console.log(error.message);
-          })
-          .then(function () {
-            // always executed
-          });
+
       }
     }
   }
 
 
-  //energy 
-  // if (step === 3) {
+  // data 
+  if (step === 5) {
+    if (result == "") {
+      readDataMeter();
+      result += " "
+    } else {
+      result += string
+      if (string.match(ETX)) {
+        console.log("Data: ", utils.getDataMeter(result));
+        const dataMeter = utils.getDataMeter(result)
+        dataSend.v = dataMeter[0]
+        dataSend.a = dataMeter[2] / 10
+        step++;
+        result = ""
+      }
+    }
+  }
+  if (step === 6) {
+    if (result == "") {
+      readDataEnergy();
+      result += " "
+    } else {
+      result += string
+      if (string.match(ETX)) {
+        console.log("Energy: ", utils.getDataEnergy(result));
+        const dataEnergy = utils.getDataMeter(result)
+        dataSend.kWh = dataEnergy[0]
+        step++;
+        result = ""
+      }
+    }
+  }
+
+  if (step === 7) {
+    if (result == "") {
+      close();
+      console.log(dataSend);
+      axios.post('http://localhost:9000/meter', {
+        ...dataSend
+      })
+        .then(function (response) {
+          // handle success
+          console.log("Send Success");
+        })
+        .catch(function (error) {
+          // handle error
+          console.log(error.message);
+        })
+        .then(function () {
+          // always executed
+        });
+      setTimeout(wakeupCommand, 30000)
+      step = 0;
+    }
+
+  }
+
+  // if (step === 5) {
   // 	if (result == "") {
-  // 		readDataMeter();
+  // 		readW();
   // 		result += " "
   // 	} else {
   // 		result += string
   // 		if (string.match(ETX)) {
-  // 			console.log(result);
-  // 			console.log("Energy: ",utils.getDataMeter(result));
+  // 			console.log("Energy: ",utils.getW(result));
+  //       const dataEnergy = utils.getW(result)
   // 			step++;
   // 			result=""
   // 		}
   // 	}
   // }
+});
+
+serialport.on('open', () => {
+  wakeupCommand();
 });
 
 serialport.on('open', () => {
@@ -160,8 +212,8 @@ const enterPassword = () => {
 };
 
 const readDataTime = () => {
-  const BCC = utils.bcc(`R1${STX}1(00000000)${ETX}`)
-  const command = `${SOH}R1${STX}1(00000000)${ETX}${BCC}`
+  const BCC = utils.bcc(`R1${STX}1${ETX}`)
+  const command = `${SOH}R1${STX}1${ETX}${BCC}`
   serialport.write(command, err => {
     if (err) console.err(err);
     else console.log(`Read Data Time: ==> `, command);
@@ -169,25 +221,34 @@ const readDataTime = () => {
 };
 
 const readMeterId = () => {
-  const BCC = utils.bcc(`R1${STX}0(00000000)${ETX}`)
-  const command = `${SOH}R1${STX}0(00000000)${ETX}${BCC}`
+  const BCC = utils.bcc(`R1${STX}0${ETX}`)
+  const command = `${SOH}R1${STX}0${ETX}${BCC}`
   serialport.write(command, err => {
     if (err) console.err(err);
     else console.log(`Read Data Id meter: ==> `, command);
   });
 };
-const readDataEnergy = () => {
-  const BCC = utils.bcc(`R1${STX}6(00010000)${ETX}`)
-  const command = `${SOH}R1${STX}6(00010000)${ETX}${BCC}`
+const readDataEnergy1 = () => {
+  const BCC = utils.bcc(`R1${STX}6${ETX}`)
+  const command = `${SOH}R1${STX}6${ETX}${BCC}`
   serialport.write(command, err => {
     if (err) console.err(err);
     else console.log(`Read Data Meter: ==> `, command);
   });
 };
 
-const readDataEnergy2 = () => {
-  const BCC = utils.bcc(`R1${STX}6(00010000)${ETX}`)
-  const command = `${SOH}R1${STX}6(00010000)${ETX}${BCC}`
+const readDataEnergy = () => {
+  const BCC = utils.bcc(`R1${STX}6(00000000)${ETX}`)
+  const command = `${SOH}R1${STX}6(00000000)${ETX}${BCC}`
+  serialport.write(command, err => {
+    if (err) console.err(err);
+    else console.log(`Read Data Meter: ==> `, command);
+  });
+};
+
+const readW = () => {
+  const BCC = utils.bcc(`R1${STX}P(00000000)${ETX}`)
+  const command = `${SOH}R1${STX}P(00000000)${ETX}${BCC}`
   serialport.write(command, err => {
     if (err) console.err(err);
     else console.log(`Read Data Meter: ==> `, command);
@@ -195,6 +256,28 @@ const readDataEnergy2 = () => {
 };
 
 const readDataMeter = () => {
+  const BCC = utils.bcc(`R1${STX}<(00000000)${ETX}`)
+  const command = `${SOH}R1${STX}<(00000000)${ETX}${BCC}`
+  serialport.write(command, err => {
+    if (err) console.err(err);
+    else console.log(`Read Data Meter: ==> `, command);
+  });
+};
+const reset = () => {
+  serialport.on('open', () => {
+    wakeupCommand();
+  });
+}
+const close = () => {
+  const BCC = utils.bcc(`B0${STX}()${ETX}`)
+  const command = `${SOH}B0${STX}()${ETX}${BCC}`
+  serialport.write(command, err => {
+    if (err) console.err(err);
+    else console.log(`Logout: ==> `, command);
+  });
+};
+
+const readDataMeter1 = () => {
   const BCC = utils.bcc(`R1${STX}<(03000000)${ETX}`)
   const command = `${SOH}R1${STX}<(03000000)${ETX}${BCC}`
   serialport.write(command, err => {
