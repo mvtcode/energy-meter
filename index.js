@@ -1,8 +1,8 @@
 const axios = require('axios');
 const SerialPort = require('serialport');
 const utils = require('./utils');
-
-const serialport = new SerialPort("COM6", {
+const urlApi = "http://localhost:9000"
+const serialport = new SerialPort("/dev/ttyUSB0", {
   baudRate: 9600,
   autoOpen: false,
 });
@@ -141,7 +141,7 @@ serialport.on('data', (data) => {
     if (result == "") {
       close();
       console.log(dataSend);
-      axios.post('http://localhost:9000/meter', {
+      axios.post(`${urlApi}/meter`, {
         ...dataSend
       })
         .then(function (response) {
