@@ -84,54 +84,44 @@ module.exports.getDataEnergy = (result) => {
   return kq
 }
 
-module.exports.getDataMeter = (result) => {
-  const dataByte = getDataFormMess(result)
-  const perData = dataByte.match(/........?/g)
-  console.log(perData);
-  const lengthPer = perData.length
-  const kq = []
-  for (let i = 0; i < lengthPer; i++) {
-    // if (i == lengthPer - 1 || i==lengthPer - 2) {
-      const twoByte = perData[i].match(/....?/g )
-      kq.push(getNumberFormData((hex2Dec(reverseString(twoByte[0]))), 2))
-      kq.push(getNumberFormData((hex2Dec(reverseString(twoByte[1]))), 2))
-    // } else {
-    //   kq.push(getNumberFormData((hex2Dec(reverseString(perData[i]))), 2))
-    // }
-  }
-  return kq
-}
+
 
 module.exports.getDataMeter = (result) => {
   const dataByte = getDataFormMess(result)
+  console.log(dataByte);
   const perData = dataByte.match(/........?/g)
   console.log(perData);
   const lengthPer = perData.length
   const kq = []
   for (let i = 0; i < lengthPer; i++) {
-    // if (i == lengthPer - 1 || i==lengthPer - 2) {
+    if (i == lengthPer - 1 || i==lengthPer - 2) {
       const twoByte = perData[i].match(/....?/g )
       kq.push(getNumberFormData((hex2Dec(reverseString(twoByte[0]))), 2))
       kq.push(getNumberFormData((hex2Dec(reverseString(twoByte[1]))), 2))
-    // } else {
-    //   kq.push(getNumberFormData((hex2Dec(reverseString(perData[i]))), 2))
-    // }
+    }else if(i==1){
+      kq.push(getNumberFormData((hex2Dec(reverseString(perData[i]))), 3))
+    } else {
+      kq.push(getNumberFormData((hex2Dec(reverseString(perData[i]))), 2))
+    }
   }
   return kq
 }
 
 module.exports.getDataMeter1 = (result) => {
   const dataByte = getDataFormMess(result)
+  
   const perData = dataByte.match(/..?/g)
   console.log(perData);
   const lengthPer = perData.length
   const kq = []
   for (let i = 0; i < lengthPer; i++) {
-    // if (i == lengthPer - 1 || i==lengthPer - 2) {
-
-    // } else {
+    console.log(i);
+    if (i == 1) {
+      console.log(i);
+      kq.push(getNumberFormData((hex2Dec(reverseString(perData[i]))), 4))
+    } else {
       kq.push(getNumberFormData((hex2Dec(reverseString(perData[i]))), 2))
-    // }
+    }
   }
   return kq
 }

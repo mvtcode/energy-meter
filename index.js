@@ -6,13 +6,12 @@ const serialport = new SerialPort("/dev/ttyUSB0", {
   baudRate: 9600,
   autoOpen: false,
 });
-
+const timeout = []
 const EL = '\r\n';
 const SOH = String.fromCharCode(1);
 const STX = String.fromCharCode(2);
 const ETX = String.fromCharCode(3);
 const ACK = String.fromCharCode(6);
-const SUB = String.fromCharCode(26);
 
 let step = 0;
 let result = ""
@@ -107,7 +106,7 @@ serialport.on('data', (data) => {
   // data 
   if (step === 5) {
     if (result == "") {
-      readDataMeter();
+      readDataMeter1();
       result += " "
     } else {
       result += string
@@ -115,12 +114,14 @@ serialport.on('data', (data) => {
         console.log("Data: ", utils.getDataMeter(result));
         const dataMeter = utils.getDataMeter(result)
         dataSend.v = dataMeter[0]
-        dataSend.a = dataMeter[2] / 10
+        dataSend.a = dataMeter[1] 
+        dataSend.w = dataMeter[3]
         step++;
         result = ""
       }
     }
   }
+
   if (step === 6) {
     if (result == "") {
       readDataEnergy();
@@ -155,47 +156,28 @@ serialport.on('data', (data) => {
         .then(function () {
           // always executed
         });
-      setTimeout(wakeupCommand, 30000)
+        timeout.push(setTimeout(wakeupCommand, 60000))
       step = 0;
     }
 
   }
 
-  // if (step === 5) {
-  // 	if (result == "") {
-  // 		readW();
-  // 		result += " "
-  // 	} else {
-  // 		result += string
-  // 		if (string.match(ETX)) {
-  // 			console.log("Energy: ",utils.getW(result));
-  //       const dataEnergy = utils.getW(result)
-  // 			step++;
-  // 			result=""
-  // 		}
-  // 	}
-  // }
 });
 
 serialport.on('open', () => {
   wakeupCommand();
 });
 
-serialport.on('open', () => {
-  wakeupCommand();
-});
 
 const wakeupCommand = () => {
-  serialport.write(Buffer.from(`/?!${EL}`), err => {
+  serialport.write(`/?!${EL}`, err => {
     if (err) console.err(err);
-    else console.log("wakeup:");
+    else console.log(`wakeup: /?!${EL}`);
   });
 };
 
 const readCommand = () => {
-  const passwordHEX = utils.string2Hex(utils.toHex("051")).toUpperCase()
-  console.log(passwordHEX);
-  serialport.write(Buffer.from(`${ACK}051${EL}`), err => {
+  serialport.write(`${ACK}051${EL}`, err => {
     if (err) console.err(err);
     else console.log("Read:");
   });
@@ -263,11 +245,8 @@ const readDataMeter = () => {
     else console.log(`Read Data Meter: ==> `, command);
   });
 };
-const reset = () => {
-  serialport.on('open', () => {
-    wakeupCommand();
-  });
-}
+
+
 const close = () => {
   const BCC = utils.bcc(`B0${STX}()${ETX}`)
   const command = `${SOH}B0${STX}()${ETX}${BCC}`
@@ -285,8 +264,10 @@ const readDataMeter1 = () => {
     else console.log(`Read Data Meter: ==> `, command);
   });
 };
-
 process.on('SIGINT', function () {
+  for (let i = 0 ; i< timeout.length; i++){
+    clearTimeout(timeout[i])
+  }
   serialport.close((err) => {
     console.log('close', err);
   });
