@@ -194,8 +194,8 @@ const enterPassword = () => {
 };
 
 const readDataTime = () => {
-  const BCC = utils.bcc(`R1${STX}1${ETX}`)
-  const command = `${SOH}R1${STX}1${ETX}${BCC}`
+  const BCC = utils.bcc(`R1${STX}1(00000000)${ETX}`)
+  const command = `${SOH}R1${STX}1(00000000)${ETX}${BCC}`
   serialport.write(command, err => {
     if (err) console.err(err);
     else console.log(`Read Data Time: ==> `, command);
@@ -203,8 +203,8 @@ const readDataTime = () => {
 };
 
 const readMeterId = () => {
-  const BCC = utils.bcc(`R1${STX}0${ETX}`)
-  const command = `${SOH}R1${STX}0${ETX}${BCC}`
+  const BCC = utils.bcc(`R1${STX}0(00000000)${ETX}`)
+  const command = `${SOH}R1${STX}0(00000000)${ETX}${BCC}`
   serialport.write(command, err => {
     if (err) console.err(err);
     else console.log(`Read Data Id meter: ==> `, command);
