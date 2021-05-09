@@ -24,6 +24,7 @@ const dataSend = {
   kWh: 0,
   w: 0
 }
+
 serialport.open((err) => {
   console.log(`Port open: ${err ? err : "ok"}`);
 });
@@ -31,7 +32,6 @@ serialport.open((err) => {
 serialport.on('data', (data) => {
   const string = data.toString();
   console.log("=>", data.toString('hex'), string);
-
   if (step === 0) {
     result += string
     if (string.match('\n')) {
@@ -106,7 +106,7 @@ serialport.on('data', (data) => {
   // data 
   if (step === 5) {
     if (result == "") {
-      readDataMeter1();
+      readDataMeter();
       result += " "
     } else {
       result += string
@@ -156,7 +156,7 @@ serialport.on('data', (data) => {
         .then(function () {
           // always executed
         });
-        timeout.push(setTimeout(wakeupCommand, 60000))
+        timeout.push(setTimeout(wakeupCommand, 10000))
       step = 0;
     }
 
@@ -210,14 +210,6 @@ const readMeterId = () => {
     else console.log(`Read Data Id meter: ==> `, command);
   });
 };
-const readDataEnergy1 = () => {
-  const BCC = utils.bcc(`R1${STX}6${ETX}`)
-  const command = `${SOH}R1${STX}6${ETX}${BCC}`
-  serialport.write(command, err => {
-    if (err) console.err(err);
-    else console.log(`Read Data Meter: ==> `, command);
-  });
-};
 
 const readDataEnergy = () => {
   const BCC = utils.bcc(`R1${STX}6(00000000)${ETX}`)
@@ -228,24 +220,14 @@ const readDataEnergy = () => {
   });
 };
 
-const readW = () => {
-  const BCC = utils.bcc(`R1${STX}P(00000000)${ETX}`)
-  const command = `${SOH}R1${STX}P(00000000)${ETX}${BCC}`
-  serialport.write(command, err => {
-    if (err) console.err(err);
-    else console.log(`Read Data Meter: ==> `, command);
-  });
-};
-
 const readDataMeter = () => {
-  const BCC = utils.bcc(`R1${STX}<(00000000)${ETX}`)
-  const command = `${SOH}R1${STX}<(00000000)${ETX}${BCC}`
+  const BCC = utils.bcc(`R1${STX}<(03000000)${ETX}`)
+  const command = `${SOH}R1${STX}<(03000000)${ETX}${BCC}`
   serialport.write(command, err => {
     if (err) console.err(err);
     else console.log(`Read Data Meter: ==> `, command);
   });
 };
-
 
 const close = () => {
   const BCC = utils.bcc(`B0${STX}()${ETX}`)
@@ -256,14 +238,7 @@ const close = () => {
   });
 };
 
-const readDataMeter1 = () => {
-  const BCC = utils.bcc(`R1${STX}<(03000000)${ETX}`)
-  const command = `${SOH}R1${STX}<(03000000)${ETX}${BCC}`
-  serialport.write(command, err => {
-    if (err) console.err(err);
-    else console.log(`Read Data Meter: ==> `, command);
-  });
-};
+
 process.on('SIGINT', function () {
   for (let i = 0 ; i< timeout.length; i++){
     clearTimeout(timeout[i])

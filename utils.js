@@ -75,7 +75,6 @@ module.exports.getId = (result) => {
 module.exports.getDataEnergy = (result) => {
   const dataByte = getDataFormMess(result)
   const perData = dataByte.match(/........?/g)
-  console.log(perData);
   const lengthPer = perData.length
   const kq = []
   for (let i = 0; i < lengthPer; i++) {
@@ -88,9 +87,7 @@ module.exports.getDataEnergy = (result) => {
 
 module.exports.getDataMeter = (result) => {
   const dataByte = getDataFormMess(result)
-  console.log(dataByte);
   const perData = dataByte.match(/........?/g)
-  console.log(perData);
   const lengthPer = perData.length
   const kq = []
   for (let i = 0; i < lengthPer; i++) {
@@ -125,15 +122,6 @@ module.exports.getDataMeter1 = (result) => {
   }
   return kq
 }
-
-module.exports.getW = (result) => {
-  const dataByte = getDataFormMess(result)
-
-  console.log(dataByte);
- 
-  return dataByte
-}
-
 const getNumberFormData = (number, decimal) => {
   return number / (Math.pow(10, decimal))
 }
