@@ -156,7 +156,7 @@ serialport.on('data', (data) => {
         .then(function () {
           // always executed
         });
-        timeout.push(setTimeout(wakeupCommand, 10000))
+        timeout.push(setTimeout(wakeupCommand, 60000))
       step = 0;
     }
 
