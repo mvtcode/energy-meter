@@ -2,7 +2,7 @@ const axios = require('axios');
 const SerialPort = require('serialport');
 const utils = require('./utils');
 const urlApi = "http://localhost:9000"
-const serialport = new SerialPort("/dev/ttyUSB0", {
+const serialport = new SerialPort("COM6", {
   baudRate: 9600,
   autoOpen: false,
 });
@@ -68,24 +68,24 @@ serialport.on('data', (data) => {
     }
   }
 
-  // meter ID
-  if (step === 3) {
-    if (result == "") {
-      readMeterId();
-      result += " "
-    } else {
-      result += string
-      if (string.match(ETX)) {
-        console.log("Id:", utils.getId(result));
-        dataSend.meterId = utils.getId(result)
-        step++;
-        result = ""
-      }
-    }
-  }
+  // // meter ID
+  // if (step === 3) {
+  //   if (result == "") {
+  //     readMeterId();
+  //     result += " "
+  //   } else {
+  //     result += string
+  //     if (string.match(ETX)) {
+  //       console.log("Id:", utils.getId(result));
+  //       dataSend.meterId = utils.getId(result)
+  //       step++;
+  //       result = ""
+  //     }
+  //   }
+  // }
 
   //date time
-  if (step === 4) {
+  if (step === 3) {
     if (result == "") {
       readDataTime();
       result += " "
@@ -103,63 +103,75 @@ serialport.on('data', (data) => {
   }
 
 
-  // data 
-  if (step === 5) {
+  // // data 
+  // if (step === 5) {
+  //   if (result == "") {
+  //     readDataMeter();
+  //     result += " "
+  //   } else {
+  //     result += string
+  //     if (string.match(ETX)) {
+  //       console.log("Data: ", utils.getDataMeter(result));
+  //       const dataMeter = utils.getDataMeter(result)
+  //       dataSend.v = dataMeter[0]
+  //       dataSend.a = dataMeter[1] 
+  //       dataSend.w = dataMeter[3]
+  //       step++;
+  //       result = ""
+  //     }
+  //   }
+  // }
+
+  // if (step === 6) {
+  //   if (result == "") {
+  //     readDataEnergy();
+  //     result += " "
+  //   } else {
+  //     result += string
+  //     if (string.match(ETX)) {
+  //       console.log("Energy: ", utils.getDataEnergy(result));
+  //       const dataEnergy = utils.getDataMeter(result)
+  //       dataSend.kWh = dataEnergy[0]
+  //       step++;
+  //       result = ""
+  //     }
+  //   }
+  // }
+
+  // if (step === 7) {
+  //   if (result == "") {
+  //     close();
+  //     console.log(dataSend);
+  //     axios.post(`${urlApi}/meter`, {
+  //       ...dataSend
+  //     })
+  //       .then(function (response) {
+  //         // handle success
+  //         console.log("Send Success");
+  //       })
+  //       .catch(function (error) {
+  //         // handle error
+  //         console.log(error.message);
+  //       })
+  //       .then(function () {
+  //         // always executed
+  //       });
+  //       timeout.push(setTimeout(wakeupCommand, 60000))
+  //     step = 0;
+  //   }
+
+  // }
+  
+  if (step === 4) {
     if (result == "") {
-      readDataMeter();
+      readEvent();
       result += " "
     } else {
       result += string
       if (string.match(ETX)) {
-        console.log("Data: ", utils.getDataMeter(result));
-        const dataMeter = utils.getDataMeter(result)
-        dataSend.v = dataMeter[0]
-        dataSend.a = dataMeter[1] 
-        dataSend.w = dataMeter[3]
-        step++;
-        result = ""
+        console.log("Event: ", utils.getEvent(result));
       }
     }
-  }
-
-  if (step === 6) {
-    if (result == "") {
-      readDataEnergy();
-      result += " "
-    } else {
-      result += string
-      if (string.match(ETX)) {
-        console.log("Energy: ", utils.getDataEnergy(result));
-        const dataEnergy = utils.getDataMeter(result)
-        dataSend.kWh = dataEnergy[0]
-        step++;
-        result = ""
-      }
-    }
-  }
-
-  if (step === 7) {
-    if (result == "") {
-      close();
-      console.log(dataSend);
-      axios.post(`${urlApi}/meter`, {
-        ...dataSend
-      })
-        .then(function (response) {
-          // handle success
-          console.log("Send Success");
-        })
-        .catch(function (error) {
-          // handle error
-          console.log(error.message);
-        })
-        .then(function () {
-          // always executed
-        });
-        timeout.push(setTimeout(wakeupCommand, 60000))
-      step = 0;
-    }
-
   }
 
 });
@@ -237,6 +249,16 @@ const close = () => {
     else console.log(`Logout: ==> `, command);
   });
 };
+
+const readEvent = () => {
+  const BCC = utils.bcc(`R1${STX}U(00080000)${ETX}`)
+  const command = `${SOH}R1${STX}U(00080000)${ETX}${BCC}`
+  serialport.write(command, err => {
+    if (err) console.err(err);
+    else console.log(`Read Event Meter: ==> `, command);
+  });
+};
+
 
 
 process.on('SIGINT', function () {
