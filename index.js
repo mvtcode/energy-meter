@@ -2,7 +2,7 @@ const axios = require('axios');
 const SerialPort = require('serialport');
 const utils = require('./utils');
 const urlApi = "http://localhost:9000"
-const serialport = new SerialPort("COM6", {
+const serialport = new SerialPort("/dev/ttyUSB0", {
   baudRate: 9600,
   autoOpen: false,
 });
