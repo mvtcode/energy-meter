@@ -78,11 +78,54 @@ module.exports.getDataEnergy = (result) => {
   const lengthPer = perData.length
   const kq = []
   for (let i = 0; i < lengthPer; i++) {
-    kq.push(getNumberFormData(hex2Dec(reverseString(perData[i])),2))
+    kq.push(getNumberFormData(hex2Dec(reverseString(perData[i])), 2))
   }
   return kq
 }
 
+
+module.exports.getEvent = (result) => {
+  const defaultTime = 1325376000 // 1-1-2012 00:00:00 UTC
+  const dataByte = getDataFormMess(result)
+  const typeEvent = hex2Dec(dataByte.slice(0, 2))
+  const numberEvent = hex2Dec(reverseString(dataByte.slice(2, 10)))
+  const kq = []
+  if (numberEvent > 0) {
+    const perData = dataByte.slice(10).match(/........?/g)
+    const dataTime = perData.map(a => defaultTime + hex2Dec(reverseString(a)) - 25200)// 7 hour
+    const lengthPer = perData.length
+    for (let i = 0; i < lengthPer; i++) {
+      const timeItem = {
+        start: null,
+        end: null
+      }
+      const timestampStart = dataTime[i]
+      const timestampEnd = dataTime[i+1]
+      // timeItem.start = new Date(timestampStart * 1000)
+      // timeItem.end = new Date(timestampEnd * 1000)
+      timeItem.start = new Date(timestampStart * 1000)
+      timeItem.end = new Date(timestampEnd * 1000)
+      i++;
+      kq.push(timeItem)
+    }
+  }
+  return { typeEvent, numberEvent, time: kq }
+
+
+  return kq
+}
+
+module.exports.getEventValue = (result) => {
+  const dataByte = getDataFormMess(result)
+  const numberEvent = hex2Dec(dataByte.slice(2, 4))
+  const valueEvent = dataByte.slice(4)
+  let kq = []
+  if (numberEvent > 0) {
+    const perData = valueEvent.match(/........?/g)
+    kq = perData.map(a => getNumberFormData((hex2Dec(reverseString(a))), 2))
+  }
+  return { value: kq, numberEventValue: numberEvent }
+}
 
 
 module.exports.getDataMeter = (result) => {
@@ -91,11 +134,11 @@ module.exports.getDataMeter = (result) => {
   const lengthPer = perData.length
   const kq = []
   for (let i = 0; i < lengthPer; i++) {
-    if (i == lengthPer - 1 || i==lengthPer - 2) {
-      const twoByte = perData[i].match(/....?/g )
+    if (i == lengthPer - 1 || i == lengthPer - 2) {
+      const twoByte = perData[i].match(/....?/g)
       kq.push(getNumberFormData((hex2Dec(reverseString(twoByte[0]))), 2))
       kq.push(getNumberFormData((hex2Dec(reverseString(twoByte[1]))), 2))
-    }else if(i==1){
+    } else if (i == 1) {
       kq.push(getNumberFormData((hex2Dec(reverseString(perData[i]))), 3))
     } else {
       kq.push(getNumberFormData((hex2Dec(reverseString(perData[i]))), 2))
@@ -104,24 +147,6 @@ module.exports.getDataMeter = (result) => {
   return kq
 }
 
-module.exports.getDataMeter1 = (result) => {
-  const dataByte = getDataFormMess(result)
-  
-  const perData = dataByte.match(/..?/g)
-  console.log(perData);
-  const lengthPer = perData.length
-  const kq = []
-  for (let i = 0; i < lengthPer; i++) {
-    console.log(i);
-    if (i == 1) {
-      console.log(i);
-      kq.push(getNumberFormData((hex2Dec(reverseString(perData[i]))), 4))
-    } else {
-      kq.push(getNumberFormData((hex2Dec(reverseString(perData[i]))), 2))
-    }
-  }
-  return kq
-}
 const getNumberFormData = (number, decimal) => {
   return number / (Math.pow(10, decimal))
 }

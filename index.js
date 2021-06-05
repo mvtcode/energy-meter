@@ -2,7 +2,7 @@ const axios = require('axios');
 const SerialPort = require('serialport');
 const utils = require('./utils');
 const urlApi = "http://localhost:9000"
-const serialport = new SerialPort("/dev/ttyUSB0", {
+const serialport = new SerialPort("COM6", {
   baudRate: 9600,
   autoOpen: false,
 });
@@ -22,7 +22,10 @@ const dataSend = {
   v: 0,
   a: 0,
   kWh: 0,
-  w: 0
+  w: 0,
+  event: {
+
+  }
 }
 
 serialport.open((err) => {
@@ -84,7 +87,7 @@ serialport.on('data', (data) => {
     }
   }
 
-  //date time
+  // //date time
   if (step === 4) {
     if (result == "") {
       readDataTime();
@@ -103,7 +106,7 @@ serialport.on('data', (data) => {
   }
 
 
-  // data 
+  // // data 
   if (step === 5) {
     if (result == "") {
       readDataMeter();
@@ -114,7 +117,7 @@ serialport.on('data', (data) => {
         console.log("Data: ", utils.getDataMeter(result));
         const dataMeter = utils.getDataMeter(result)
         dataSend.v = dataMeter[0]
-        dataSend.a = dataMeter[1] 
+        dataSend.a = dataMeter[1]
         dataSend.w = dataMeter[3]
         step++;
         result = ""
@@ -138,7 +141,122 @@ serialport.on('data', (data) => {
     }
   }
 
+  //event
   if (step === 7) {
+    const typeEvent = 1
+    if (result == "") {
+      readEvent(typeEvent);
+      result += " "
+    } else {
+      result += string
+      if (string.match(ETX)) {
+        console.log("Event: ", utils.getEvent(result))
+        dataSend.event[`${typeEvent}`] = utils.getEvent(result)
+        step++;
+        result = ""
+      }
+    }
+  }
+
+  if (step === 8) {
+    const typeEvent = 2
+    if (result == "") {
+      readEvent(typeEvent);
+      result += " "
+    } else {
+      result += string
+      if (string.match(ETX)) {
+        console.log("Event: ", utils.getEvent(result));
+        dataSend.event[`${typeEvent}`] = utils.getEvent(result)
+        step++;
+        result = ""
+      }
+    }
+  }
+
+  if (step === 9) {
+    const typeEvent = 3
+    if (result == "") {
+      readEvent(typeEvent);
+      result += " "
+    } else {
+      result += string
+      if (string.match(ETX)) {
+        console.log("Event: ", utils.getEvent(result));
+        dataSend.event[`${typeEvent}`] = utils.getEvent(result)
+        step++;
+        result = ""
+      }
+    }
+  }
+
+  if (step === 10) {
+    const typeEvent = 8
+    if (result == "") {
+      readEvent(typeEvent);
+      result += " "
+    } else {
+      result += string
+      if (string.match(ETX)) {
+        console.log("Event: ", utils.getEvent(result));
+        dataSend.event[`${typeEvent}`] = { ...utils.getEvent(result) }
+        step++;
+        result = ""
+      }
+    }
+  }
+
+  if (step === 11) {
+    const typeEvent = 1
+    if (result == "") {
+      readEventValue(typeEvent);
+      result += " "
+    } else {
+      result += string
+      if (string.match(ETX)) {
+        console.log("Event: ", utils.getEventValue(result))
+        const value = utils.getEventValue(result)
+        dataSend.event[`${typeEvent}`] = { ...dataSend.event[`${typeEvent}`], ...value }
+        step++;
+        result = ""
+      }
+    }
+  }
+
+  if (step === 12) {
+    const typeEvent = 2
+    if (result == "") {
+      readEventValue(typeEvent);
+      result += " "
+    } else {
+      result += string
+      if (string.match(ETX)) {
+        console.log("Event: ", utils.getEventValue(result))
+        const value = utils.getEventValue(result)
+        dataSend.event[`${typeEvent}`] = { ...dataSend.event[`${typeEvent}`], ...value }
+        step++;
+        result = ""
+      }
+    }
+  }
+  if (step === 13) {
+    const typeEvent = 3
+    if (result == "") {
+      readEventValue(typeEvent);
+      result += " "
+    } else {
+      result += string
+      if (string.match(ETX)) {
+        console.log("Event: ", utils.getEventValue(result))
+        const value = utils.getEventValue(result)
+        dataSend.event[`${typeEvent}`] = { ...dataSend.event[`${typeEvent}`], ...value }
+        step++;
+        result = ""
+      }
+    }
+  }
+
+  if (step === 14) {
     if (result == "") {
       close();
       console.log(dataSend);
@@ -156,11 +274,13 @@ serialport.on('data', (data) => {
         .then(function () {
           // always executed
         });
-        timeout.push(setTimeout(wakeupCommand, 60000))
+      timeout.push(setTimeout(wakeupCommand, 60000))
       step = 0;
     }
 
   }
+
+
 
 });
 
@@ -229,6 +349,24 @@ const readDataMeter = () => {
   });
 };
 
+const readEvent = (typeEvent) => {
+  const BCC = utils.bcc(`R1${STX}U(000${typeEvent}0000)${ETX}`)
+  const command = `${SOH}R1${STX}U(000${typeEvent}0000)${ETX}${BCC}`
+  serialport.write(command, err => {
+    if (err) console.err(err);
+    else console.log(`Read Data Meter: ==> `, command);
+  });
+};
+
+const readEventValue = (typeEvent) => {
+  const BCC = utils.bcc(`R1${STX}k(000${typeEvent}0000)${ETX}`)
+  const command = `${SOH}R1${STX}k(000${typeEvent}0000)${ETX}${BCC}`
+  serialport.write(command, err => {
+    if (err) console.err(err);
+    else console.log(`Read Data Meter: ==> `, command);
+  });
+};
+
 const close = () => {
   const BCC = utils.bcc(`B0${STX}()${ETX}`)
   const command = `${SOH}B0${STX}()${ETX}${BCC}`
@@ -240,7 +378,7 @@ const close = () => {
 
 
 process.on('SIGINT', function () {
-  for (let i = 0 ; i< timeout.length; i++){
+  for (let i = 0; i < timeout.length; i++) {
     clearTimeout(timeout[i])
   }
   serialport.close((err) => {
