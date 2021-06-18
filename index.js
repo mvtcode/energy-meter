@@ -2,6 +2,7 @@ const axios = require('axios');
 const SerialPort = require('serialport');
 const utils = require('./utils');
 const urlApi = "http://localhost:9000"
+const urlApi1 = "http://178.128.63.140:8000"
 const serialport = new SerialPort("/dev/ttyUSB0", {
   baudRate: 9600,
   autoOpen: false,
@@ -274,7 +275,21 @@ serialport.on('data', (data) => {
         .then(function () {
           // always executed
         });
-      timeout.push(setTimeout(wakeupCommand, 60000))
+      axios.post(`${urlApi1}/meter`, {
+        ...dataSend
+      })
+        .then(function (response) {
+          // handle success
+          console.log("Send Success");
+        })
+        .catch(function (error) {
+          // handle error
+          console.log(error.message);
+        })
+        .then(function () {
+          // always executed
+        });
+      timeout.push(setTimeout(wakeupCommand, 10000))
       step = 0;
     }
 
@@ -378,10 +393,10 @@ const close = () => {
 
 
 process.on('SIGINT', function () {
-  for (let i = 0; i < timeout.length; i++) {
-    clearTimeout(timeout[i])
-  }
+  timeout.forEach(i => clearTimeout(i))
   serialport.close((err) => {
     console.log('close', err);
+    process.exit()
   });
+
 });
